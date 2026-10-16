@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cek Hasil Ujian - MAS ASH SHIDIQI</title>
+
+  <!-- ✅ KONFIGURASI BACKEND -->
+  <script>
+    window.APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2eqY2YMXA1U7_OLPiFzlTMjqa4wVxoeRv3XGWdLGO7qJ-ZBBAL0WtshuvSau5f77B/exec';
+  </script>
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: "Segoe UI", Arial, sans-serif; background: #f0f2f5; min-height:100vh; padding:16px; color:#333; -webkit-text-size-adjust: 100%; }
+    .container { max-width: 640px; margin: 0 auto; }
+
+    /* ===== FORM INPUT ===== */
+    .card { background: white; border-radius: 14px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-bottom: 16px; }
+    h1 { color: #1a237e; font-size: 20px; text-align: center; margin-bottom: 6px; }
+    .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; }
+    input {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+    input:focus { outline: none; border-color: #3f51b5; }
+    .btn-primary { width: 100%; padding: 14px; background: #1a237e; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; transition: 0.15s; }
+    .btn-primary:hover { background: #303f9f; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ===== PESAN ===== */
+    .msg { padding: 12px 14px; border-radius: 8px; margin-top: 12px; font-size: 14px; display: none; line-height: 1.5; }
+    .msg.error { background: #ffebee; color: #c62828; display: block; border: 1px solid #ef9a9a; }
+    .msg.info { background: #e3f2fd; color: #0d47a1; display: block; border: 1px solid #90caf9; }
+
+    /* Animasi goyang input saat error */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+    .shake { animation: shake 0.4s ease-in-out; }
+
+    /* ===== RAPOR ===== */
+    #raporContainer { display: none; }
+
+    .rapor {
+      background: white;
+      border-radius: 12px;
+      padding: 28px 22px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    /* KOP */
+    .kop {
+      text-align: center;
+      padding-bottom: 14px;
+      border-bottom: 3px double #1a237e;
+      margin-bottom: 18px;
+    }
+    .kop .sekolah {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a237e;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .kop .alamat {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .kop .judul {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a237e;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 6px;
+    }
+
+    /* IDENTITAS */
+    .identitas {
+      background: #f8f9ff;
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      border-left: 4px solid #3f51b5;
+    }
+    .identitas-row {
+      display: flex;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .identitas-row:last-child { margin-bottom: 0; }
+    .identitas-row .label { width: 100px; color: #666; flex-shrink: 0; }
+    .identitas-row .sep { width: 12px; color: #666; flex-shrink: 0; }
+    .identitas-row .value { font-weight: 700; color: #1a237e; flex: 1; word-break: break-word; }
+
+    /* TABEL NILAI */
+    .tabel-wrap { border-radius: 10px; overflow: hidden; border: 1px solid #e0e0e0; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: #1a237e;
+      color: white;
+      padding: 11px 8px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    th.center, td.center { text-align: center; }
+    td { padding: 11px 8px; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:nth-child(even) { background: #fafbff; }
+    .mapel-cell { font-weight: 600; color: #222; }
+    .jenis-cell { font-size: 11px; color: #888; }
+
+    .nilai-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 12px;
+      display: inline-block;
+      min-width: 42px;
+      text-align: center;
+    }
+    .nilai-badge.hijau { background: #e8f5e9; color: #2e7d32; }
+    .nilai-badge.orange { background: #fff8e1; color: #f57c00; }
+    .nilai-badge.merah { background: #ffebee; color: #c62828; }
+
+    /* ===== KETERANGAN TUNTAS / BELUM ===== */
+    .ket-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-block;
+      white-space: nowrap;
+      letter-spacing: 0.2px;
+    }
+    .ket-badge.ket-tuntas {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+    .ket-badge.ket-belum {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ef9a9a;
+    }
+
+    /* ===== BARIS JUMLAH — 4 KOLOM DESKTOP ===== */
+    .baris-jumlah {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+      color: white;
+      padding: 14px 6px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
+    .baris-jumlah .item {
+      text-align: center;
+      padding: 6px 4px;
+      position: relative;
+    }
+
+    /* Garis pemisah vertikal (desktop) */
+    .baris-jumlah .item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1px;
+      height: 32px;
+      background: rgba(255,255,255,0.25);
+    }
+
+    .baris-jumlah .item .num {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .baris-jumlah .item .lbl {
+      font-size: 10px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    /* ===== HP: 2x2 GRID, SEMUA SEJAJAR ===== */
+    @media (max-width: 520px) {
+      .baris-jumlah {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 6px;
+        gap: 1px;
+        background: rgba(255,255,255,0.15);
+      }
+
+      .baris-jumlah .item {
+        background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+        padding: 14px 8px;
+        border-radius: 6px;
+        min-height: 72px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      /* Hilangkan divider vertikal */
+      .baris-jumlah .item:not(:last-child)::after {
+        display: none;
+      }
+
+      .baris-jumlah .item .num {
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .baris-jumlah .item .lbl {
+        font-size: 10px;
+        margin-top: 6px;
+      }
+
+      /* Tabel: perkecil padding & font */
+      .tabel-wrap table { font-size: 11px; }
+      th { padding: 7px 3px; font-size: 9px; }
+      td { padding: 7px 3px; font-size: 11px; }
+      .mapel-cell { font-size: 11px; }
+      .jenis-cell { font-size: 9px; }
+      .nilai-badge { padding: 3px 6px; font-size: 10px; min-width: 32px; }
+      .ket-badge { padding: 3px 6px; font-size: 9px; }
+
+      .rapor { padding: 20px 12px; }
+      .kop .sekolah { font-size: 17px; }
+      .kop .judul { font-size: 13px; }
+      .identitas { padding: 12px 14px; }
+      .identitas-row { font-size: 12px; }
+      .identitas-row .label { width: 80px; }
+    }
+
+    /* ===== HP SANGAT KECIL ===== */
+    @media (max-width: 360px) {
+      .baris-jumlah .item .num { font-size: 20px; }
+      .baris-jumlah .item .lbl { font-size: 9px; }
+      .baris-jumlah .item { min-height: 62px; padding: 10px 4px; }
+
+      .tabel-wrap table { font-size: 10px; }
+      th { font-size: 8px; padding: 6px 2px; }
+      td { font-size: 10px; padding: 6px 2px; }
+      .mapel-cell { font-size: 10px; }
+      .jenis-cell { font-size: 8px; }
+      .nilai-badge { font-size: 9px; min-width: 28px; padding: 2px 5px; }
+      .ket-badge { font-size: 8px; padding: 2px 4px; }
+    }
+
+    /* ===== FOOTER ===== */
+    .rapor-footer {
+      text-align: center;
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 10px;
+    }
+
+    /* ===== TOMBOL AKSI ===== */
+    .btn-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .btn-actions button {
+      flex: 1;
+      min-width: 90px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.15s;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .btn-actions button:active { transform: scale(0.97); }
+    .btn-cetak { background: #e3f2fd; color: #0d47a1; }
+    .btn-cetak:hover { background: #bbdefb; }
+    .btn-cari { background: #e8f5e9; color: #2e7d32; }
+    .btn-cari:hover { background: #c8e6c9; }
+    .btn-keluar { background: #ffebee; color: #c62828; }
+    .btn-keluar:hover { background: #ffcdd2; }
+
+    .empty { text-align: center; padding: 40px 20px; color: #888; }
+
+    /* ===== PRINT ===== */
+    @media print {
+      body { background: white; padding: 0; }
+      .btn-actions, .rapor-footer { display: none !important; }
+      .rapor { box-shadow: none; border-radius: 0; padding: 0; }
+      .baris-jumlah {
+        background: #1a237e !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .nilai-badge, .ket-badge {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ===== CARD INPUT ===== -->
+    <div class="card" id="cardInput">
+      <h1>👨‍👩‍👧 Cek Hasil Ujian</h1>
+      <div class="subtitle">Portal Orang Tua / Wali Murid</div>
+      <input type="text" id="inputNoTes" placeholder="Masukkan Nomor Tes anak" autocomplete="off">
+      <button class="btn-primary" id="btnCek" onclick="cekHasil()">🔍 Lihat Hasil Ujian</button>
+      <div id="message" class="msg"></div>
+    </div>
+
+    <!-- ===== RAPOR ===== -->
+    <div id="raporContainer"></div>
+
+  </div>
+
+<script>
+// ============================================================
+// KONFIGURASI — Batas nilai tuntas
+// ============================================================
+var BATAS_TUNTAS = 75;
+
+// ============================================================
+// CALL SERVER
+// ============================================================
+function callServer(funcName, callback, errorCallback) {
+  var args = Array.prototype.slice.call(arguments, 3);
+  var url = window.APPS_SCRIPT_URL;
+
+  if (!url) {
+    if (errorCallback) errorCallback('APPS_SCRIPT_URL belum diset.');
+    return;
+  }
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: funcName, args: args }),
+    redirect: 'follow'
+  })
+  .then(function(r) { return r.text(); })
+  .then(function(text) {
+    var result;
+    try { result = JSON.parse(text); }
+    catch (e) {
+      var m = text.match(/\{[\s\S]*\}/);
+      if (m) result = JSON.parse(m[0]);
+      else throw new Error('Response tidak valid');
+    }
+    if (callback) callback(result);
+  })
+  .catch(function(err) {
+    if (errorCallback) errorCallback(err.message || String(err));
+  });
+}
+
+// ============================================================
+// CEK HASIL
+// ============================================================
+function cekHasil() {
+  var noTes = document.getElementById('inputNoTes').value.trim();
+  var msg = document.getElementById('message');
+  var btn = document.getElementById('btnCek');
+  var inputEl = document.getElementById('inputNoTes');
+
+  // ✅ Validasi input kosong
+  if (!noTes) {
+    msg.className = 'msg error';
+    msg.textContent = '❌ Nomor Tes wajib diisi.';
+    msg.style.display = 'block';
+    inputEl.classList.add('shake');
+    setTimeout(function() { inputEl.classList.remove('shake'); }, 500);
+    inputEl.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Memuat...';
+  msg.style.display = 'none';
+
+  callServer('getHasilUjianByNoTes', function(result) {
+    btn.disabled = false;
+    btn.textContent = '🔍 Lihat Hasil Ujian';
+
+    // ✅ VALIDASI 1: Response gagal / Nomor Tes tidak ditemukan
+    if (!result || !result.success) {
+      msg.className = 'msg error';
+      msg.textContent = '❌ ' + (result ? result.message : 'Nomor Tes tidak ditemukan. Periksa kembali.');
+      msg.style.display = 'block';
+
+      inputEl.classList.add('shake');
+      setTimeout(function() { inputEl.classList.remove('shake'); }, 500);
+      inputEl.select();
+      inputEl.focus();
+      return;   // ← form TETAP TAMPIL
+    }
+
+    // ✅ VALIDASI 2: Siswa ada tapi belum ada ujian
+    if (!result.hasil || result.hasil.length === 0) {
+      msg.className = 'msg info';
+      msg.textContent = 'ℹ️ Siswa ditemukan (' + result.siswa.nama + '), tetapi belum ada ujian yang diselesaikan.';
+      msg.style.display = 'block';
+      return;   // ← form TETAP TAMPIL
+    }
+
+    // ✅ BERHASIL: sembunyikan form, tampilkan rapor
+    document.getElementById('cardInput').style.display = 'none';
+    renderRapor(result);
+
+  }, function(err) {
+    btn.disabled = false;
+    btn.textContent = '🔍 Lihat Hasil Ujian';
+    msg.className = 'msg error';
+    msg.textContent = '❌ Gagal terhubung ke server. Periksa koneksi internet lalu coba lagi.';
+    msg.style.display = 'block';
+
+    inputEl.classList.add('shake');
+    setTimeout(function() { inputEl.classList.remove('shake'); }, 500);
+  }, noTes);
+}
+
+// ============================================================
+// RENDER RAPOR
+// ============================================================
+function renderRapor(data) {
+  var container = document.getElementById('raporContainer');
+  var s = data.siswa;
+  var st = data.statistik;
+
+  window.__hasilData = data;
+
+  var html = '<div class="rapor">';
+
+  // ===== KOP =====
+  html += '<div class="kop">' +
+    '<div class="sekolah">MAS ASH SHIDIQI</div>' +
+    '<div class="alamat">Rajabasa Baru · Cirebon</div>' +
+    '<div class="judul">Laporan Hasil Ujian</div>' +
+    '</div>';
+
+  // ===== IDENTITAS =====
+  html += '<div class="identitas">' +
+    '<div class="identitas-row"><span class="label">Nama</span><span class="sep">:</span><span class="value">' + escapeHtml(s.nama) + '</span></div>' +
+    '<div class="identitas-row"><span class="label">Nomor Tes</span><span class="sep">:</span><span class="value">' + escapeHtml(s.noTes) + '</span></div>' +
+    '<div class="identitas-row"><span class="label">Kelas</span><span class="sep">:</span><span class="value">' + escapeHtml(s.kelas) + '</span></div>' +
+    '</div>';
+
+  // ===== TABEL NILAI (dengan kolom Keterangan) =====
+  html += '<div class="tabel-wrap">' +
+    '<table>' +
+    '<thead><tr>' +
+    '<th>Mapel</th>' +
+    '<th>Jenis</th>' +
+    '<th class="center">Benar</th>' +
+    '<th class="center">Nilai</th>' +
+    '<th class="center">Keterangan</th>' +
+    '</tr></thead><tbody>';
+
+  data.hasil.forEach(function(h) {
+    var cls = h.nilai >= BATAS_TUNTAS ? 'hijau' : (h.nilai >= 60 ? 'orange' : 'merah');
+    var tuntas = h.nilai >= BATAS_TUNTAS;
+    var ketCls = tuntas ? 'ket-tuntas' : 'ket-belum';
+    var ketText = tuntas ? '✓ Tuntas' : '✗ Belum Tuntas';
+
+    html += '<tr>' +
+      '<td class="mapel-cell">' + escapeHtml(h.mapel) + '</td>' +
+      '<td class="jenis-cell">' + escapeHtml(h.jenisPenilaian || '-') + '</td>' +
+      '<td class="center">' + h.benar + '/' + h.jumlahSoal + '</td>' +
+      '<td class="center"><span class="nilai-badge ' + cls + '">' + h.nilai + '</span></td>' +
+      '<td class="center"><span class="ket-badge ' + ketCls + '">' + ketText + '</span></td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+
+  // ===== BARIS JUMLAH (2x2 di HP) =====
+  html += '<div class="baris-jumlah">' +
+    '<div class="item"><div class="num">' + st.totalUjian + '</div><div class="lbl">Total Ujian</div></div>' +
+    '<div class="item"><div class="num">' + st.rataRata + '</div><div class="lbl">Rata-rata</div></div>' +
+    '<div class="item"><div class="num">' + st.tertinggi + '</div><div class="lbl">Tertinggi</div></div>' +
+    '<div class="item"><div class="num">' + st.terendah + '</div><div class="lbl">Terendah</div></div>' +
+    '</div>';
+
+  // ===== FOOTER =====
+  html += '<div class="rapor-footer">Dicetak: ' + escapeHtml(data.dicetakPada) + '</div>';
+
+  html += '</div>'; // tutup .rapor
+
+  // ===== TOMBOL AKSI =====
+  html += '<div class="btn-actions">' +
+    '<button class="btn-cetak" onclick="cetakRapor()">🖨️ Cetak</button>' +
+    '<button class="btn-cari" onclick="cariLagi()">✏️ Cari Lagi</button>' +
+    '<button class="btn-keluar" onclick="keluar()">🚪 Keluar</button>' +
+    '</div>';
+
+  container.innerHTML = html;
+  container.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// CETAK
+// ============================================================
+function cetakRapor() {
+  window.print();
+}
+
+// ============================================================
+// CARI LAGI
+// ============================================================
+function cariLagi() {
+  document.getElementById('raporContainer').innerHTML = '';
+  document.getElementById('raporContainer').style.display = 'none';
+  document.getElementById('cardInput').style.display = 'block';
+  document.getElementById('inputNoTes').value = '';
+  document.getElementById('message').style.display = 'none';
+  document.getElementById('message').className = 'msg';
+  window.__hasilData = null;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(function() {
+    document.getElementById('inputNoTes').focus();
+  }, 300);
+}
+
+// ============================================================
+// KELUAR
+// ============================================================
+function keluar() {
+  var yakin = confirm('🚪 Keluar dari portal ini?');
+  if (!yakin) return;
+  cariLagi();
+}
+
+// ============================================================
+// UTILITY
+// ============================================================
+function escapeHtml(v) {
+  var d = document.createElement('div');
+  d.textContent = v == null ? '' : String(v);
+  return d.innerHTML;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('inputNoTes').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') cekHasil();
+  });
+});
+</script>
+</body>
+</html>
